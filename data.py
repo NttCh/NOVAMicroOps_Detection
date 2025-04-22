@@ -39,12 +39,10 @@ class PatchClassificationDataset(Dataset):
         valid_rows = []
         for idx, row in df.iterrows():
             primary_path = os.path.join(image_dir, row[image_col])
-            alternative_folder = image_dir.replace("Fa", "test")
-            alternative_path = os.path.join(alternative_folder, row[image_col])
-            if os.path.exists(primary_path) or os.path.exists(alternative_path):
+            if os.path.exists(primary_path):
                 valid_rows.append(row)
             else:
-                print(f"Warning: Image not found for row {idx}: {primary_path} or {alternative_path}. Skipping.")
+                print(f"Warning: Image not found for row {idx}: {primary_path}. Skipping.")
 
         self.df = pd.DataFrame(valid_rows)
         self.image_dir = image_dir
@@ -70,13 +68,7 @@ class PatchClassificationDataset(Dataset):
         if os.path.exists(primary_path):
             image_path = primary_path
         else:
-            alternative_folder = self.image_dir.replace("Fa", "test")
-            alternative_path = os.path.join(alternative_folder, row[self.image_col])
-            if os.path.exists(alternative_path):
-                image_path = alternative_path
-                print(f"Using alternative image path: {image_path}")
-            else:
-                raise FileNotFoundError(f"Image not found: {primary_path} or {alternative_path}")
+            raise FileNotFoundError(f"Image not found: {primary_path}")
 
         image = cv2.imread(image_path, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32)
