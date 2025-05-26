@@ -11,22 +11,36 @@ from utils import load_obj
 def build_classifier(cfg: Any, num_classes: int) -> nn.Module:
     """
     Build a classification model given a config.
-
-    Args:
-        cfg (DictConfig): The configuration object.
-        num_classes (int): Number of output classes.
-
-    Returns:
-        nn.Module: The PyTorch model.
+    Automatically replaces the final FC/Classifier layer to match num_classes.
     """
+
     backbone_cls = load_obj(cfg.model.backbone.class_name)
     model = backbone_cls(**cfg.model.backbone.params)
 
-    # Replace the final layer
-    in_features = model.fc.in_features
-    model.fc = nn.Linear(in_features, num_classes)
-    return model
+    if hasattr(model, "fc"):
+        head_name = "fc"
+        old_head = model.fc
+    elif hasattr(model, "classifier"):
+        head_name = "classifier"
+        old_head = model.classifier
+    else:
+        raise ValueError(
+            f"Don't know how to replace the head for {cfg.model.backbone.class_name}"
+        )
 
+    if isinstance(old_head, nn.Sequential):
+        in_features = next(
+            m for m in reversed(old_head) if isinstance(m, nn.Linear)
+        ).in_features
+    else:
+        in_features = old_head.in_features
+
+    # build and set the new head
+    new_head = nn.Linear(in_features, num_classes)
+    setattr(model, head_name, new_head)
+
+    return model
+    
 
 class LitClassifier(pl.LightningModule):
     """
