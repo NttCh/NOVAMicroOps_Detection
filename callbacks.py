@@ -111,9 +111,9 @@ class MasterValidationMetricsCallback(pl.Callback):
 
         avg_loss = all_loss / count if count > 0 else 0.0
         acc = accuracy_score(all_labels, all_preds)
-        prec = precision_score(all_labels, all_preds, average='weighted', zero_division=0)
-        rec = recall_score(all_labels, all_preds, average='weighted', zero_division=0)
-        f2 = fbeta_score(all_labels, all_preds, beta=2, average='weighted', zero_division=0)
+        prec = precision_score(all_labels, all_preds, average='binary', zero_division=0)
+        rec = recall_score(all_labels, all_preds, average='binary', zero_division=0)
+        f2 = fbeta_score(all_labels, all_preds, beta=2, average='binary', zero_division=0)
 
         epoch = trainer.current_epoch + 1
         row = {
